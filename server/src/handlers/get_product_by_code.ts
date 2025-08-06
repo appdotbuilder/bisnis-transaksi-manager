@@ -1,9 +1,27 @@
 
+import { db } from '../db';
+import { productsTable } from '../db/schema';
 import { type Product } from '../schema';
+import { eq } from 'drizzle-orm';
 
-export async function getProductByCode(productCode: string): Promise<Product | null> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching a specific product by its product_code.
-    // Used for auto-filling price when product code is entered in transaction.
-    return Promise.resolve(null);
-}
+export const getProductByCode = async (productCode: string): Promise<Product | null> => {
+  try {
+    const results = await db.select()
+      .from(productsTable)
+      .where(eq(productsTable.product_code, productCode))
+      .execute();
+
+    if (results.length === 0) {
+      return null;
+    }
+
+    const product = results[0];
+    return {
+      ...product,
+      price: parseFloat(product.price) // Convert numeric string to number
+    };
+  } catch (error) {
+    console.error('Product lookup by code failed:', error);
+    throw error;
+  }
+};
