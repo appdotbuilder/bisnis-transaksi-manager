@@ -8,7 +8,7 @@ import fs from 'fs/promises';
 export async function generateDocument(
     transactionId: number, 
     documentType: 'SURAT_PEMESANAN' | 'INVOICE' | 'KWITANSI' | 'NOTA_PEMBELIAN' | 'BAST' | 'FAKTUR_PAJAK'
-): Promise<{ documentId: number, filePath: string }> {
+): Promise<{ documentId: number, filePath: string, htmlContent: string }> {
     try {
         // 1. Fetch transaction data with customer and items
         const transactionResult = await db.select()
@@ -81,7 +81,8 @@ export async function generateDocument(
 
         return {
             documentId: document.id,
-            filePath: filePath
+            filePath: filePath,
+            htmlContent: htmlContent
         };
     } catch (error) {
         console.error('Document generation failed:', error);

@@ -410,11 +410,31 @@ function App() {
 
   const handleGenerateDocument = async (transactionId: number, documentType: 'SURAT_PEMESANAN' | 'INVOICE' | 'KWITANSI' | 'NOTA_PEMBELIAN' | 'BAST' | 'FAKTUR_PAJAK') => {
     try {
-      await trpc.generateDocument.mutate({ 
+      const response = await trpc.generateDocument.mutate({ 
         transactionId, 
         documentType 
       });
-      toast.success(`Dokumen ${documentType} berhasil dibuat`);
+      
+      // Extract the HTML content from the response
+      const { htmlContent } = response;
+      
+      // Open a new window for printing
+      const newWindow = window.open('', '_blank');
+      
+      // Check if newWindow is not null (to handle pop-up blockers)
+      if (newWindow) {
+        // Write the HTML content to the new window's document
+        newWindow.document.write(htmlContent);
+        newWindow.document.close();
+        
+        // Trigger the print dialog immediately
+        newWindow.print();
+        
+        toast.success(`Dokumen ${documentType} berhasil dibuat dan siap dicetak`);
+      } else {
+        // Display error message if pop-ups are blocked
+        toast.error('Pop-up diblokir oleh browser. Silakan izinkan pop-up untuk mencetak dokumen.');
+      }
     } catch (error) {
       console.error('Generate document error:', error);
       toast.error('Gagal membuat dokumen');
