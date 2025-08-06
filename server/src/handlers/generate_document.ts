@@ -313,38 +313,131 @@ function generateSignatureHtml(storeName: string, transactionDate: Date): string
 
 // Document-specific HTML generators
 function generateSuratPemesananHtml(storeProfile: any, customer: any, transaction: any, items: any[], documentNumber: string): string {
-    const header = generateSharedHeaderHtml(storeProfile, customer, 'SURAT PEMESANAN', documentNumber);
-    const itemsTable = generateItemsTableHtml(items);
-    const signature = generateSignatureHtml(storeProfile.store_name, transaction.transaction_date);
+    const formattedDate = formatDate(transaction.transaction_date);
     
     return `
     <!DOCTYPE html>
     <html lang="id">
     <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Surat Pemesanan</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <style>
-            @page { size: A4; margin: 0; }
-            body { margin: 2cm; font-family: 'Arial', sans-serif; }
-            @media print {
-                .container { box-shadow: none; }
-            }
-        </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surat Pemesanan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      @page {
+        size: A4;
+        margin: 20mm;
+      }
+      @media print {
+          .no-print {
+              display: none !important;
+          }
+      }
+    </style>
     </head>
-    <body>
-        <div class="container mx-auto p-6 bg-white shadow-lg rounded-lg">
-            ${header}
-            <div class="mb-6">
-                <p class="text-sm text-gray-700">Dengan ini kami memesan barang-barang sebagai berikut:</p>
+    <body class="bg-gray-100 p-8">
+      <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="p-8">
+          <div class="text-center mb-8 border-b-2 pb-4">
+            <h2 class="text-2xl font-bold text-gray-800">SURAT PEMESANAN</h2>
+            <p class="text-sm text-gray-600">Nomor PO: <span class="font-semibold">${documentNumber}</span></p>
+          </div>
+          <div class="flex justify-between mb-6">
+              <h4 class="font-bold text-sm text-gray-700">${formattedDate}</h4>
+          </div>
+          <div class="flex justify-between mb-6">
+            <div class="w-1/2">
+              <h4 class="font-bold text-sm text-gray-700">Kepada Yth:</h4>
+              <p class="text-sm text-gray-600">${storeProfile.store_name}</p>
+              <p class="text-sm text-gray-600">${storeProfile.address}</p>
+              <p class="text-sm text-gray-600">Telp: ${storeProfile.phone}</p>
             </div>
-            ${itemsTable}
-            <div class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400">
-                <p class="text-sm text-yellow-800"><strong>Catatan:</strong> Barang akan dikirimkan paling lambat 7 hari setelah tanggal pemesanan.</p>
+            <div class="w-1/2 text-right">
+              <h4 class="font-bold text-sm text-gray-700">Pemesanan dari:</h4>
+              <p class="text-sm text-gray-600">${customer.institution_name}</p>
+              <p class="text-sm text-gray-600">${customer.address}</p>
+              ${customer.npwp ? `<p class="text-sm text-gray-600">NPWP: ${customer.npwp}</p>` : ''}
             </div>
-            ${signature}
+          </div>
+       
+          <p class="text-sm text-gray-700 mb-4">Dengan hormat, kami memesan barang/jasa berikut ini:</p>
+    
+          <table class="min-w-full bg-white rounded-md overflow-hidden border border-gray-300">
+            <thead>
+              <tr class="bg-gray-200">
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">No.</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">Kode Barang</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">Nama Barang/Jasa</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">Qty</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b text-right">Harga Satuan</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              ${items.map((item, index) => `
+              <tr>
+                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-800 border-b">${index + 1}</td>
+                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-800 border-b">${item.products.product_code}</td>
+                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-800 border-b">${item.products.product_name}</td>
+                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-800 border-b">${parseFloat(item.transaction_items.quantity)}</td>
+                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-800 border-b text-right">${formatCurrency(item.products.price)}</td>
+                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-800 border-b text-right">${formatCurrency(parseFloat(item.transaction_items.quantity) * parseFloat(item.products.price) - parseFloat(item.transaction_items.discount))}</td>
+              </tr>
+              `).join('')}
+            </tbody>
+            <tfoot class="bg-gray-100">
+              <tr>
+                <td colspan="5" class="px-4 py-2 text-right text-sm font-semibold text-gray-700">Subtotal</td>
+                <td class="px-4 py-2 text-sm font-semibold text-gray-700 text-right">${formatCurrency(transaction.subtotal)}</td>
+              </tr>
+              ${transaction.ppn_enabled ? `
+              <tr>
+                <td colspan="5" class="px-4 py-2 text-right text-sm font-semibold text-gray-700">PPN (11%)</td>
+                <td class="px-4 py-2 text-sm font-semibold text-gray-700 text-right">${formatCurrency(transaction.ppn_amount)}</td>
+              </tr>
+              ` : ''}
+              ${parseFloat(transaction.total_discount) > 0 ? `
+              <tr>
+                <td colspan="5" class="px-4 py-2 text-right text-sm font-semibold text-red-600">Total Diskon</td>
+                <td class="px-4 py-2 text-sm font-semibold text-red-600 text-right">-${formatCurrency(transaction.total_discount)}</td>
+              </tr>
+              ` : ''}
+              <tr>
+                <td colspan="5" class="px-4 py-2 text-right text-sm font-bold text-gray-800">Grand Total</td>
+                <td class="px-4 py-2 text-sm font-bold text-gray-800 text-right">**${formatCurrency(transaction.total_amount)}**</td>
+              </tr>
+            </tfoot>
+          </table>
+    
+          <div class="mt-6">
+            <p class="font-bold text-sm text-gray-700">Catatan:</p>
+            <ul class="list-disc list-inside text-sm text-gray-600">
+              <li>Barang akan dikirimkan paling lambat 7 hari setelah tanggal pemesanan.</li>
+              ${transaction.stamp_required ? `<li>Dokumen ini memerlukan meterai.</li>` : ''}
+            </ul>
+          </div>
+    
+          <div class="flex justify-between mt-12">
+            <div class="w-1/2 text-center">
+              <p class="text-sm text-gray-600">Hormat kami,</p>
+              <p class="text-sm text-gray-600">${storeProfile.store_name}</p>
+              <div class="h-20"></div>
+              <p class="text-sm font-bold text-gray-800">(_________________________)</p>
+              <p class="text-sm text-gray-600">Pimpinan ${storeProfile.store_name}</p>
+            </div>
+            <div class="w-1/2 text-center">
+              <p class="text-sm text-gray-600">Pemesanan oleh,</p>
+              <p class="text-sm text-gray-600">${customer.institution_name}</p>
+              <div class="h-20"></div>
+              <p class="text-sm font-bold text-gray-800">(_________________________)</p>
+              <p class="text-sm text-gray-600">${customer.contact_person}</p>
+            </div>
+          </div>
         </div>
+      </div>
     </body>
     </html>`;
 }
