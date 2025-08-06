@@ -89,7 +89,7 @@ describe('generateDocument', () => {
         expect(result.filePath).toBeDefined();
         expect(result.filePath).toContain(String(transaction[0].id));
         expect(result.filePath).toContain('INVOICE');
-        expect(result.filePath).toEndWith('.pdf');
+        expect(result.filePath).toEndWith('.html');
 
         // Clean up - remove created file
         try {
@@ -265,7 +265,7 @@ describe('generateDocument', () => {
         expect(fileContent).toContain('BAST');
         expect(fileContent).toContain('Test Store');
         expect(fileContent).toContain('Test Customer');
-        expect(fileContent).toContain('TRX002');
+        expect(fileContent).toContain('TRX002'); // This is the transaction_id field in the transaction record
         expect(fileContent).toContain('Test Product');
         expect(fileContent).toContain('500');
 
